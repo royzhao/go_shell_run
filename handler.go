@@ -69,6 +69,8 @@ func Handler4(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 			mapCons[cid] = &con2
 		} else {
 			con.Image = res[0].Config.Image
+			con.Port = getContainerPort(res[0].NetworkSettings.Ports)
+
 		}
 	}
 }

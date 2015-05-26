@@ -26,7 +26,7 @@ func System(cmd string, f IOHandler) (string, error) {
 	}
 
 	err = c.Start()
-	log.Println("runing")
+	log.Println("runing ", cmd)
 	if err != nil {
 		os.Exit(-1)
 	}
