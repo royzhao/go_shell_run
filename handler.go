@@ -113,6 +113,7 @@ func Handler2(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 		if num > 0 {
 			mutex.Lock()
 			defer mutex.Unlock()
+			mapCons = make(map[string]*Container)
 			for i := 1; i < num; i++ {
 				res := strings.Fields(tmp[i])
 				log.Println(res)
@@ -127,7 +128,7 @@ func Handler2(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 
 				} else {
 					con.Image = res[1]
-					con.Port = res[5]
+					// con.Port = res[5]
 				}
 			}
 		}

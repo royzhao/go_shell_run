@@ -42,18 +42,18 @@ func main() {
 	}()
 
 	for {
-		time.Sleep(800 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 		var sd SendData
-		// _, err = System("docker ps", Handler2)
-		// if err != nil {
-		// 	log.Println(err)
-		// } else {
-		newCpu := getCPUSample()
-		sd.Cpu = getCpuUsage(lastCpu, newCpu)
-		sd.Mem = getMemUsage()
-		sd.Containers = getConsInfo()
-		client.Send(sd)
-		// }
+		_, err = System("docker ps", Handler2)
+		if err != nil {
+			log.Println(err)
+		} else {
+			newCpu := getCPUSample()
+			sd.Cpu = getCpuUsage(lastCpu, newCpu)
+			sd.Mem = getMemUsage()
+			sd.Containers = getConsInfo()
+			client.Send(sd)
+		}
 	}
 
 }
