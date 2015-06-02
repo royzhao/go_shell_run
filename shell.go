@@ -2,7 +2,7 @@ package main
 
 import (
 	"io"
-	"log"
+	// "log"
 	"os"
 	"os/exec"
 )
@@ -26,7 +26,7 @@ func System(cmd string, f IOHandler) (string, error) {
 	}
 
 	err = c.Start()
-	log.Println("runing ", cmd)
+	// log.Println("runing ", cmd)
 	if err != nil {
 		os.Exit(-1)
 	}
@@ -34,7 +34,7 @@ func System(cmd string, f IOHandler) (string, error) {
 
 	err = c.Wait()
 	//cancel timer
-	log.Println("run command over")
+	// log.Println("run command over")
 	if err != nil {
 		return "error", err
 	}

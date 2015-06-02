@@ -9,6 +9,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Runres struct {
@@ -40,8 +41,17 @@ func getContainerPort(ports nat.PortMap) string {
 //docker inspect
 func Handler4(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 	obyte, err := ioutil.ReadAll(stdout)
+	stde, f := ioutil.ReadAll(stderr)
+	if f != nil {
+		log.Println(f)
+		return
+	} else {
+		log.Println("handler4 err:", stde)
+	}
 	if err != nil {
 		log.Println("err in exec handler4")
+		log.Println(err)
+		return
 	} else {
 		var res []types.ContainerJSON
 		err = json.Unmarshal(obyte, &res)
@@ -52,8 +62,6 @@ func Handler4(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 		// current := string(obyte)
 
 		// res := strings.Fields(current)
-		mutex.Lock()
-		defer mutex.Unlock()
 		cid, err := substring(res[0].Id, 0, 12)
 		if err != nil {
 			return
@@ -66,10 +74,14 @@ func Handler4(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 			con2.Id = cid
 			con2.Port = getContainerPort(res[0].NetworkSettings.Ports)
 			con2.Image = res[0].Config.Image
+			mutex.Lock()
 			mapCons[cid] = &con2
+			mutex.Unlock()
 		} else {
+			mutex.Lock()
 			con.Image = res[0].Config.Image
 			con.Port = getContainerPort(res[0].NetworkSettings.Ports)
+			mutex.Unlock()
 
 		}
 	}
@@ -105,51 +117,67 @@ func Handler3(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 func Handler2(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 	obyte, err := ioutil.ReadAll(stdout)
 	if err != nil {
-
+		return
 	} else {
 		current := string(obyte)
 		tmp := strings.Split(current, "\n")
 		num := len(tmp) - 1
 		if num > 0 {
-			mutex.Lock()
-			defer mutex.Unlock()
-			mapCons = make(map[string]*Container)
+
 			for i := 1; i < num; i++ {
 				res := strings.Fields(tmp[i])
-				log.Println(res)
 				con := mapCons[res[0]]
+				log.Println("docker ps ", res[0])
 				if con == nil {
 					var con2 Container
 					con2.Cpu = 0.0
 					con2.Mem = 0.0
 					con2.Id = res[0]
 					con2.Image = res[1]
+					con = &con2
+					mutex.Lock()
 					mapCons[res[0]] = &con2
-
-				} else {
-					con.Image = res[1]
-					// con.Port = res[5]
+					mutex.Unlock()
+					//new
+					go System("docker stats "+con.Id, Handler1)
 				}
+
 			}
+			// mapCons = mapCons2
 		}
 	}
 }
 
 //docker stats
 func Handler1(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
+	id := ""
 	for {
-
 		obyte := make([]byte, 180)
+		if stdout == nil {
+			if id != "" {
+				mutex.Lock()
+				delete(mapCons, id)
+				mutex.Unlock()
+			}
+			return
+		}
 		_, err := stdout.Read(obyte)
 		if err != nil {
+			log.Println("handler1 err")
+			if id != "" {
+				log.Println("remove handler 1")
+				mutex.Lock()
+				delete(mapCons, id)
+				mutex.Unlock()
+			}
 			log.Println(err)
+			return
 		} else {
 			current := string(obyte)
 			tmp := strings.Split(current, "\n")
 			if len(tmp) > 1 {
 				res := strings.Fields(tmp[1])
 				if len(res) > 6 {
-					mutex.Lock()
 					cpu := strings.Split(res[1], "%")
 
 					cpu_data, err := strconv.ParseFloat(cpu[0], 64)
@@ -158,24 +186,42 @@ func Handler1(stdin io.Writer, stdout io.Reader, stderr io.Reader) {
 
 					} else {
 						con := mapCons[res[0]]
+						id = res[0]
 						if con == nil {
+							if cpu_data == 0 && mem_data == 0 {
+								//dead
+								return
+							}
 							var con2 Container
 							con2.Cpu = cpu_data
 							con2.Mem = 1024 * mem_data
 							con2.Id = res[0]
+							con2.Time = time.Now()
 							con = &con2
+
+							mutex.Lock()
 							mapCons[res[0]] = &con2
-							System("docker inspect "+res[0], Handler4)
+							mutex.Unlock()
+
 						} else {
+							if cpu_data == 0 && mem_data == 0 {
+								//dead
+								mutex.Lock()
+								delete(mapCons, res[0])
+								mutex.Unlock()
+								return
+							}
 							con.Cpu = cpu_data
 							con.Mem = 1024 * mem_data
+							con.Time = time.Now()
 						}
-						log.Println("==============")
-						log.Println(*con)
-						log.Println("==============")
+						System("docker inspect "+res[0], Handler4)
+						// log.Println("==============")
+						// log.Println(*con)
+						// log.Println("==============")
 
 					}
-					mutex.Unlock()
+
 				}
 			}
 		}

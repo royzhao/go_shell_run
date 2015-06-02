@@ -17,7 +17,7 @@ func getMemUsage() float64 {
 	v, _ := mem.VirtualMemory()
 	// almost every return value is a struct
 
-	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
+	// fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
 	return float64(v.Total - v.Free)
 }
 func getCpuUsage(sample0, sample1 CpuSample) float64 {
@@ -59,8 +59,11 @@ func getConsInfo() []Container {
 	i := 0
 	data := make([]Container, num)
 	for _, c := range mapCons {
-		data[i] = *c
-		i++
+		if c != nil {
+			data[i] = *c
+			i++
+		}
+
 	}
 	return data
 }

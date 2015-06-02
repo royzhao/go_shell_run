@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	data    SendData
-	cons    *[]Container
-	mapCons = make(map[string]*Container)
-	lastCpu CpuSample
-	mutex   sync.Mutex
+	data      SendData
+	cons      *[]Container
+	mapCons   = make(map[string]*Container)
+	updateMap = make(map[string]int64)
+	lastCpu   CpuSample
+	mutex     sync.Mutex
 )
 
 func main() {
@@ -30,16 +31,26 @@ func main() {
 	}
 
 	// run container
-	go func() {
-		r := Runres{
-			cmd:    "docker stats $(docker ps -q)",
-			result: "",
-		}
-		_, err := System(r.cmd, Handler1)
-		if err != nil {
-			log.Println(err)
-		}
-	}()
+	// go func() {
+	// 	r := Runres{
+	// 		cmd:    "docker stats $(docker ps -q)",
+	// 		result: "",
+	// 	}
+	// 	_, err := System(r.cmd, Handler1)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 	}
+	// }()
+
+	// go func() {
+	// 	for {
+	// 		time.Sleep(1 * time.Second)
+	// 		_, err = System("docker ps", Handler2)
+	// 		if err != nil {
+	// 			log.Println(err)
+	// 		}
+	// 	}
+	// }()
 
 	for {
 		time.Sleep(1 * time.Second)
@@ -52,6 +63,9 @@ func main() {
 			sd.Cpu = getCpuUsage(lastCpu, newCpu)
 			sd.Mem = getMemUsage()
 			sd.Containers = getConsInfo()
+			log.Println("run..")
+
+			// log.Println(sd)
 			client.Send(sd)
 		}
 	}

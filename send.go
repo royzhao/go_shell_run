@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 )
 
 type DataClient struct {
@@ -14,7 +15,9 @@ type Container struct {
 	Port  string  `json:"port"`
 	Cpu   float64 `json:"cpu"`
 	Mem   float64 `json:"mem"`
+	Time  time.Time
 }
+
 type SendData struct {
 	Host       string      `json:"host"`
 	Cpu        float64     `json:"cpu"`

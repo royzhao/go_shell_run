@@ -73,7 +73,10 @@ func (c *client) do(method, path string, data interface{}, forceJSON bool, formD
 		req.Header.Set("Content-Type", "plain/text")
 	}
 	var resp *http.Response
+	fmt.Println("send data")
+	fmt.Println(data)
 	resp, err = c.HTTPClient.Do(req)
+	fmt.Println("over")
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {
 			return nil, -1, ErrConnectionRefused
